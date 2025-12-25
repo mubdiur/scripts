@@ -4,7 +4,7 @@
 # Check if an argument is provided
 if [ -z "$1" ]; then
   echo "Usage: ./update_rs.sh <connection_string>"
-  echo "Example: ./update_rs.sh mongodb://user:pass@host:27017"
+  echo "Example: ./update_rs.sh mongodb://user:pass:27017/orifine-main?replicaSet=rs0&authSource=admin"
   exit 1
 fi
 
