@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# After running this script, use <mongourl/dbname>?replicaSet=rs0&authSource=admin
 # Check if an argument is provided
 if [ -z "$1" ]; then
   echo "Usage: ./update_rs.sh <connection_string>"
