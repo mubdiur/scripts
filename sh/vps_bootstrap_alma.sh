@@ -156,7 +156,7 @@ systemctl enable --now crowdsec
 ################################
 echo "Configuring CrowdSec..."
 cscli collections install crowdsecurity/linux
-cscli collections install crowdsecurity/ssh
+cscli collections install crowdsecurity/sshd  # <--- CHANGED FROM ssh TO sshd
 cscli collections install crowdsecurity/base-http-scenarios
 cscli hub update
 
