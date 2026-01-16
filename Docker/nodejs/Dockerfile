@@ -1,14 +1,23 @@
-FROM node:lts-trixie-slim
+FROM node:20-slim
+
+RUN apt-get update -y && apt-get install -y openssl
+
 WORKDIR /app
+
 RUN corepack enable
 
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm config set enable-pre-post-scripts true && pnpm install
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
+COPY packages ./packages
 COPY . .
-ENV NODE_OPTIONS="--max-old-space-size=4096"
-RUN pnpm run build
+
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm config set store-dir /pnpm/store && \
+    pnpm config set enable-pre-post-scripts true && \
+    pnpm install
+
+RUN pnpm prisma generate
 
 EXPOSE 1100
-CMD ["pnpm", "run", "start"]
 
+CMD ["pnpm", "start"]
