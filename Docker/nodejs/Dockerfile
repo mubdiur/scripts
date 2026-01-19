@@ -14,6 +14,7 @@ COPY . .
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm config set store-dir /pnpm/store && \
     pnpm config set enable-pre-post-scripts true && \
+    pnpm config set enable-scripts true && \
     pnpm install
 
 RUN pnpm prisma generate
@@ -21,3 +22,4 @@ RUN pnpm prisma generate
 EXPOSE 1100
 
 CMD ["pnpm", "start"]
+
