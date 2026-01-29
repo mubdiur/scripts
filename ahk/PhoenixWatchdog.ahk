@@ -4,9 +4,9 @@ Persistent
 
 ; --- CONFIGURATION AREA (CHANGE THESE) ---
 ; Path to your application executable
-AppPath := "C:\Program Files\Google\Chrome\Application\chrome.exe"
+AppPath := "C:\Users\mubdiur\AppData\Local\Programs\Tabby\Tabby.exe"
 ; The actual process name (check Task Manager details tab)
-ExeName := "chrome.exe"
+ExeName := "Tabby.exe"
 ; -----------------------------------------
 
 ; Set the Tray Icon to match your target app
