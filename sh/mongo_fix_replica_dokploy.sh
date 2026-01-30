@@ -1,6 +1,7 @@
 #!/bin/bash
 # After running this script, use <mongourl/dbname>?replicaSet=rs0&authSource=admin
-
+# bash <(curl -fsSL https://raw.githubusercontent.com/mubdiur/scripts/refs/heads/main/sh/mongo_fix_replica_dokploy.sh) "mongodb://mongo:iulu3mhzi26nbpa8@sentora-db-ne2cgq:27017"
+# mongosh "/?replicaSet=rs0&authSource=admin"
 # Check if an argument is provided
 if [ -z "$1" ]; then
   echo "Usage: ./update_rs.sh <connection_string>"
