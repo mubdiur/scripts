@@ -165,7 +165,7 @@ elif [ "$OPERATION" == "2" ]; then
 
             print('-----------------------------------');
             print('Success! Node is now configured as Primary.');
-            print('Connection string: mongodb://user:pass@' + targetHost + '/dbname?replicaSet=rs0&authSource=admin');
+            print('Connection string: mongodb://user:pass@' + targetHost + '/dbname?replicaSet=rs0&authSource=admin&w=1');
         } catch (e) {
             print('Error updating config:');
             print(e);
