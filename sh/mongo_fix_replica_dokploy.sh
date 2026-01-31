@@ -1,15 +1,34 @@
 #!/bin/bash
-# After running this script, use <mongourl/dbname>?replicaSet=rs0&authSource=admin
-# bash <(curl -fsSL https://raw.githubusercontent.com/mubdiur/scripts/refs/heads/main/sh/mongo_fix_replica_dokploy.sh) "mongodb://mongo:iulu3mhzi26nbpa8@sentora-db-ne2cgq:27017"
-# mongosh "/?replicaSet=rs0&authSource=admin"
-# Check if an argument is provided
-if [ -z "$1" ]; then
-  echo "Usage: ./update_rs.sh <connection_string>"
-  echo "Example: ./update_rs.sh mongodb://user:pass:27017/orifine-main?replicaSet=rs0&authSource=admin"
+# MongoDB Replica Set Configuration Updater
+# Usage: ./script.sh
+#   - Prompts for connection string (format: mongodb://username:password@host:port)
+#   - Connects via localhost (for container/SSH environments)
+#   - Updates all replica set members to use the new hostname
+# After running: append ?replicaSet=rs0&authSource=admin to your connection string
+
+# Prompt for connection string
+read -p "Enter MongoDB connection string (e.g., mongodb://user:pass@host:27017): " CONNECTION_STRING
+
+# Validate that input is not empty
+if [ -z "$CONNECTION_STRING" ]; then
+  echo "Error: Connection string cannot be empty."
   exit 1
 fi
 
-CONNECTION_STRING="$1"
+# Validate connection string format (basic check for mongodb:// prefix)
+if [[ ! "$CONNECTION_STRING" =~ ^mongodb:// ]]; then
+  echo "Error: Connection string must start with 'mongodb://'"
+  echo "Example: mongodb://username:password@host:port"
+  exit 1
+fi
+
+# Validate that connection string contains @ (username:password@host format)
+if [[ ! "$CONNECTION_STRING" =~ @ ]]; then
+  echo "Error: Connection string must include credentials in format: mongodb://username:password@host"
+  exit 1
+fi
+
+echo ""
 echo "--- MongoDB Replica Set Config Updater ---"
 
 # 1. Parse the Connection String
@@ -52,24 +71,7 @@ echo "Using command: $MONGO_CMD"
     var targetHost = '$TARGET_HOST';
     print('Target Host set to: ' + targetHost);
 
-    // --- STEP 1: Try to allow listening on all hosts (0.0.0.0) ---
-    // Note: This attempts a runtime update. If it fails, you must set 
-    // 'net.bindIp: 0.0.0.0' in mongod.conf and restart the service.
-    try {
-        var res = db.adminCommand({ setParameter: 1, bindIp: '0.0.0.0' });
-        if (res.ok === 1) {
-            print('Success: Server set to listen on 0.0.0.0 (all interfaces).');
-        } else {
-            print('Warning: Could not update bindIp dynamically.');
-            print('Please ensure bindIp is set to 0.0.0.0 in your configuration file.');
-        }
-    } catch (e) {
-        print('Info: Could not set bindIp dynamically (permission or version restriction).');
-    }
-
-    print('---');
-
-    // --- STEP 2: Update ALL Replica Set Members ---
+    // --- Update ALL Replica Set Members ---
     try {
         var cfg = rs.conf();
         
