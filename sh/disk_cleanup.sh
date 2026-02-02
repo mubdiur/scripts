@@ -7,6 +7,8 @@
 # Safety: Multiple checks before deletion, dry-run mode available
 ################################################################################
 
+# install: curl -fsSL https://raw.githubusercontent.com/mubdiur/scripts/main/sh/disk_cleanup.sh -o /usr/local/bin/vps-cleanup && chmod +x /usr/local/bin/vps-cleanup
+
 set -euo pipefail  # Exit on error, undefined variables, and pipe failures
 
 # Configuration
