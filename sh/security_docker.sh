@@ -134,6 +134,53 @@ check_docker() {
     log "INFO" "Docker version: $docker_version"
 }
 
+check_dependencies() {
+    local deps=("curl" "wget" "jq")
+    local missing=()
+
+    # Check which dependencies are missing
+    for cmd in "${deps[@]}"; do
+        if ! command -v "$cmd" >/dev/null 2>&1; then
+            missing+=("$cmd")
+        fi
+    done
+
+    # Install missing dependencies
+    if [[ ${#missing[@]} -gt 0 ]]; then
+        echo -e "${YELLOW}Installing required dependencies: ${missing[*]}${NC}"
+        log "INFO" "Installing dependencies: ${missing[*]}"
+
+        case "$PKG_MANAGER" in
+            apt-get)
+                ${PKG_MANAGER} update -qq >/dev/null 2>&1
+                ${PKG_MANAGER} install -y "${missing[@]}" >/dev/null 2>&1
+                ;;
+            yum|dnf)
+                ${PKG_MANAGER} install -y "${missing[@]}" >/dev/null 2>&1
+                ;;
+            pacman)
+                ${PKG_MANAGER} -Sy --noconfirm "${missing[@]}" >/dev/null 2>&1
+                ;;
+        esac
+
+        # Verify installation
+        local failed=()
+        for cmd in "${missing[@]}"; do
+            if ! command -v "$cmd" >/dev/null 2>&1; then
+                failed+=("$cmd")
+            fi
+        done
+
+        if [[ ${#failed[@]} -gt 0 ]]; then
+            echo -e "${RED}Warning: Failed to install: ${failed[*]}${NC}"
+            log "WARN" "Failed to install dependencies: ${failed[*]}"
+        else
+            echo -e "${GREEN}✓ All dependencies installed${NC}"
+            log "INFO" "Dependencies installed successfully"
+        fi
+    fi
+}
+
 # Input validation functions
 validate_container_id() {
     local cid="$1"
@@ -302,7 +349,10 @@ EOF
             ${PKG_MANAGER} install -y trivy
             ;;
         arch)
-            ${PKG_MANAGER} -Sy --noconfirm trivy
+            # Use -Sy cautiously on Arch - for a standalone package this is acceptable
+            # but avoid partial upgrades in production environments
+            ${PKG_MANAGER} -Sy --noconfirm trivy 2>&1 | tee -a "$SESSION_LOG" || \
+                echo -e "${YELLOW}Note: On Arch Linux, consider full system upgrade if issues occur${NC}"
             ;;
     esac
 
@@ -555,11 +605,13 @@ option2_clamav_container() {
     log "INFO" "Starting ClamAV scan"
 
     # Run scan with proper security context
-    # We create a non-root user in the container to avoid running as root
+    # NOTE: Running as root is required to read the host-mounted temp directory
+    # which is owned by root with 700 permissions
     local scan_output
     scan_output=$(mktemp)
 
     if docker run --rm \
+        --user root \
         --read-only \
         --tmpfs /tmp:rw,noexec,nosuid,size=1g \
         -v "$WORKDIR":/scandir:ro \
@@ -1014,7 +1066,9 @@ option7_container_forensics() {
 
     # File system changes
     echo -e "${CYAN}[4/6]${NC} Analyzing filesystem changes..."
-    docker diff "$CID" > "$forensics_dir/filesystem-diff.txt" 2>&1 || true
+    echo -e "${YELLOW}     (This may produce large output for long-running containers)${NC}"
+    docker diff "$CID" 2>&1 | head -n 10000 > "$forensics_dir/filesystem-diff.txt" || true
+    echo "Note: Output limited to first 10,000 lines for performance" >> "$forensics_dir/filesystem-diff.txt"
 
     # Container logs
     echo -e "${CYAN}[5/6]${NC} Collecting container logs..."
@@ -1132,6 +1186,7 @@ main_menu() {
     check_root
     detect_os
     get_pkg_manager
+    check_dependencies
     check_docker
     setup_logging
 
