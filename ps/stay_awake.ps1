@@ -1,0 +1,1 @@
+Add-Type -Name K -Namespace W -MemberDefinition '[DllImport("kernel32.dll")] public static extern uint SetThreadExecutionState(uint f);'; $wsh = New-Object -ComObject WScript.Shell; while($true){ [W.K]::SetThreadExecutionState([uint32]0x80000003L); $wsh.SendKeys('{F15}'); Start-Sleep 60 }
